@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  firstName            String
+  lastName             String
+  password             String
+  role                 UserRole  @default(DEVELOPER)
+  profileImage         String?
+  bio                  String?
+  githubUrl            String?
+  portfolioUrl         String?
+  stripeCustomerId     String?
+  stripeConnectAccountId String?
+  createdBounties      Bounty[]  @relation("CreatedBounties")
+  assignedBounties     Bounty[]  @relation("AssignedBounties")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model Bounty {
+  id              String        @id @default(uuid())
+  title           String
+  description     String
+  type            BountyType    @default(DEVELOPMENT)
+  price           Decimal       @db.Decimal(10, 2)
+  status          BountyStatus  @default(OPEN)
+  githubIssueUrl  String?
+  githubPRUrl     String?
+  attachments     Json?
+  creator         User          @relation("CreatedBounties", fields: [creatorId], references: [id])
+  creatorId       String
+  assignee        User?         @relation("AssignedBounties", fields: [assigneeId], references: [id])
+  assigneeId      String?
+  assignedAt      DateTime?
+  completedAt     DateTime?
+  approvedAt      DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum UserRole {
+  CLIENT
+  DEVELOPER
+  DESIGNER
+  ADMIN
+}
+
+enum BountyStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum BountyType {
+  DEVELOPMENT
+  DESIGN
+}

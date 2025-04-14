@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsNumber, IsString, IsUrl, Min } from 'class-validator';
-import { BountyStatus, BountyType } from '../entities/bounty.entity';
+import { BountyStatus, BountyType } from '@prisma/client';
 
 export class UpdateBountyDto {
   @ApiProperty({ required: false })

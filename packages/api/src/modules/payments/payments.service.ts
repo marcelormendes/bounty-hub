@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { BountyStatus } from '@prisma/client';
 import Stripe from 'stripe';
 import { BountiesService } from '../bounties/bounties.service';
 import { UsersService } from '../users/users.service';
-import { BountyStatus } from '../bounties/entities/bounty.entity';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 
 @Injectable()
@@ -22,11 +22,11 @@ export class PaymentsService {
 
   async createPaymentIntent(userId: string, createPaymentIntentDto: CreatePaymentIntentDto) {
     const bounty = await this.bountiesService.findOne(createPaymentIntentDto.bountyId);
-    
+
     if (bounty.status !== BountyStatus.OPEN) {
       throw new BadRequestException('This bounty is not available for payment');
     }
-    
+
     if (bounty.creatorId !== userId) {
       throw new BadRequestException('You can only pay for your own bounties');
     }
@@ -34,13 +34,13 @@ export class PaymentsService {
     // Get or create Stripe customer
     const user = await this.usersService.findOneById(userId);
     let customerId = user.stripeCustomerId;
-    
+
     if (!customerId) {
       const customer = await this.stripe.customers.create({
         email: user.email,
         name: `${user.firstName} ${user.lastName}`,
       });
-      
+
       customerId = customer.id;
       await this.usersService.updateStripeCustomerId(user.id, customerId);
     }
@@ -73,7 +73,7 @@ export class PaymentsService {
 
   async createConnectAccount(userId: string) {
     const user = await this.usersService.findOneById(userId);
-    
+
     if (user.stripeConnectAccountId) {
       return { accountId: user.stripeConnectAccountId };
     }
@@ -107,7 +107,7 @@ export class PaymentsService {
 
   async getConnectAccountLink(userId: string) {
     const user = await this.usersService.findOneById(userId);
-    
+
     if (!user.stripeConnectAccountId) {
       throw new NotFoundException('No Stripe Connect account found');
     }
@@ -124,7 +124,7 @@ export class PaymentsService {
 
   async processBountyPayment(bountyId: string) {
     const bounty = await this.bountiesService.findOne(bountyId);
-    
+
     if (bounty.status !== BountyStatus.APPROVED || !bounty.assigneeId) {
       throw new BadRequestException('Bounty is not ready for payment');
     }

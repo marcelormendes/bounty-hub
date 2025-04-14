@@ -1,55 +1,57 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Bounty, BountyStatus } from './entities/bounty.entity';
+import { Bounty, BountyStatus, BountyType, User, UserRole } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBountyDto } from './dto/create-bounty.dto';
 import { UpdateBountyDto } from './dto/update-bounty.dto';
-import { User, UserRole } from '../users/entities/user.entity';
 
 @Injectable()
 export class BountiesService {
-  constructor(
-    @InjectRepository(Bounty)
-    private bountiesRepository: Repository<Bounty>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(createBountyDto: CreateBountyDto, creator: User): Promise<Bounty> {
     if (creator.role !== UserRole.CLIENT && creator.role !== UserRole.ADMIN) {
       throw new ForbiddenException('Only clients and admins can create bounties');
     }
 
-    const bounty = this.bountiesRepository.create({
-      ...createBountyDto,
-      creator,
-      creatorId: creator.id,
-      status: BountyStatus.OPEN,
+    return this.prisma.bounty.create({
+      data: {
+        ...createBountyDto,
+        creatorId: creator.id,
+        status: BountyStatus.OPEN,
+      },
     });
-
-    return this.bountiesRepository.save(bounty);
   }
 
-  async findAll(options?: { status?: BountyStatus; type?: string }): Promise<Bounty[]> {
-    const queryBuilder = this.bountiesRepository.createQueryBuilder('bounty');
-    queryBuilder.leftJoinAndSelect('bounty.creator', 'creator');
-    queryBuilder.leftJoinAndSelect('bounty.assignee', 'assignee');
+  async findAll(options?: { status?: BountyStatus; type?: BountyType }): Promise<Bounty[]> {
+    const where: any = {};
 
     if (options?.status) {
-      queryBuilder.andWhere('bounty.status = :status', { status: options.status });
+      where.status = options.status;
     }
 
     if (options?.type) {
-      queryBuilder.andWhere('bounty.type = :type', { type: options.type });
+      where.type = options.type;
     }
 
-    queryBuilder.orderBy('bounty.createdAt', 'DESC');
-
-    return queryBuilder.getMany();
+    return this.prisma.bounty.findMany({
+      where,
+      include: {
+        creator: true,
+        assignee: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async findOne(id: string): Promise<Bounty> {
-    const bounty = await this.bountiesRepository.findOne({
+    const bounty = await this.prisma.bounty.findUnique({
       where: { id },
-      relations: ['creator', 'assignee'],
+      include: {
+        creator: true,
+        assignee: true,
+      },
     });
 
     if (!bounty) {
@@ -84,32 +86,41 @@ export class BountiesService {
       }
     }
 
+    // Prepare data for update
+    const data: any = { ...updateBountyDto };
+
     // Handle status transitions
     if (updateBountyDto.status) {
       switch (updateBountyDto.status) {
         case BountyStatus.COMPLETED:
-          bounty.completedAt = new Date();
+          data.completedAt = new Date();
           break;
         case BountyStatus.APPROVED:
           if (user.id !== bounty.creatorId && user.role !== UserRole.ADMIN) {
             throw new ForbiddenException('Only the creator or admin can approve a bounty');
           }
-          bounty.approvedAt = new Date();
+          data.approvedAt = new Date();
           break;
         case BountyStatus.PAID:
           if (user.role !== UserRole.ADMIN) {
             throw new ForbiddenException('Only admins can mark a bounty as paid');
           }
-          bounty.paidAt = new Date();
+          data.paidAt = new Date();
           break;
       }
     }
 
-    Object.assign(bounty, updateBountyDto);
-    return this.bountiesRepository.save(bounty);
+    return this.prisma.bounty.update({
+      where: { id },
+      data,
+      include: {
+        creator: true,
+        assignee: true,
+      },
+    });
   }
 
-  async remove(id: string, user: User): Promise<void> {
+  async remove(id: string, user: User): Promise<Bounty> {
     const bounty = await this.findOne(id);
 
     if (bounty.creatorId !== user.id && user.role !== UserRole.ADMIN) {
@@ -120,7 +131,7 @@ export class BountiesService {
       throw new ForbiddenException('Only open bounties can be deleted');
     }
 
-    await this.bountiesRepository.remove(bounty);
+    return this.prisma.bounty.delete({ where: { id } });
   }
 
   async assignBounty(id: string, user: User): Promise<Bounty> {
@@ -134,12 +145,18 @@ export class BountiesService {
       throw new ForbiddenException('You cannot assign your own bounty to yourself');
     }
 
-    bounty.assignee = user;
-    bounty.assigneeId = user.id;
-    bounty.assignedAt = new Date();
-    bounty.status = BountyStatus.IN_PROGRESS;
-
-    return this.bountiesRepository.save(bounty);
+    return this.prisma.bounty.update({
+      where: { id },
+      data: {
+        assigneeId: user.id,
+        assignedAt: new Date(),
+        status: BountyStatus.IN_PROGRESS,
+      },
+      include: {
+        creator: true,
+        assignee: true,
+      },
+    });
   }
 
   async releaseBounty(id: string, user: User): Promise<Bounty> {
@@ -157,11 +174,17 @@ export class BountiesService {
       throw new ForbiddenException('You do not have permission to release this bounty');
     }
 
-    bounty.assignee = null;
-    bounty.assigneeId = null;
-    bounty.assignedAt = null;
-    bounty.status = BountyStatus.OPEN;
-
-    return this.bountiesRepository.save(bounty);
+    return this.prisma.bounty.update({
+      where: { id },
+      data: {
+        assigneeId: null,
+        assignedAt: null,
+        status: BountyStatus.OPEN,
+      },
+      include: {
+        creator: true,
+        assignee: true,
+      },
+    });
   }
 }

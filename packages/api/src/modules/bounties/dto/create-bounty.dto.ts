@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, Min } from 'class-validator';
-import { BountyType } from '../entities/bounty.entity';
+import { BountyType } from '@prisma/client';
 
 export class CreateBountyDto {
   @ApiProperty({ example: 'Fix login bug' })
