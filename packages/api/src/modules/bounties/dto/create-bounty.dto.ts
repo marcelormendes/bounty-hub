@@ -1,35 +1,32 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl, Min } from 'class-validator';
+import { createZodDto } from '@anatine/zod-nestjs';
+import { extendApi } from '@anatine/zod-openapi';
 import { BountyType } from '@prisma/client';
+import { z } from 'zod';
 
-export class CreateBountyDto {
-  @ApiProperty({ example: 'Fix login bug' })
-  @IsString()
-  @IsNotEmpty()
-  title: string;
+const CreateBountySchema = z.object({
+  title: extendApi(z.string().min(1), {
+    description: 'The title of the bounty',
+    example: 'Fix login bug',
+  }),
+  description: extendApi(z.string().min(1), {
+    description: 'A detailed description of the bounty task',
+    example: 'The login form is not submitting correctly...',
+  }),
+  type: extendApi(z.nativeEnum(BountyType), {
+    description: 'The type of the bounty',
+    example: BountyType.DEVELOPMENT,
+  }),
+  price: extendApi(z.number().min(1), {
+    description: 'The price offered for completing the bounty',
+    example: 100.00,
+  }),
+  githubIssueUrl: extendApi(z.string().url().optional(), {
+    description: 'Optional URL to the related GitHub issue',
+    example: 'https://github.com/org/repo/issues/1',
+  }),
+  attachments: extendApi(z.array(z.string()).optional(), {
+    description: 'Optional list of attachment URLs or identifiers',
+  }),
+});
 
-  @ApiProperty({ example: 'The login form is not submitting correctly...' })
-  @IsString()
-  @IsNotEmpty()
-  description: string;
-
-  @ApiProperty({ enum: BountyType, example: BountyType.DEVELOPMENT })
-  @IsEnum(BountyType)
-  @IsNotEmpty()
-  type: BountyType;
-
-  @ApiProperty({ example: 100.00 })
-  @IsNumber()
-  @Min(1)
-  @IsNotEmpty()
-  price: number;
-
-  @ApiProperty({ required: false, example: 'https://github.com/org/repo/issues/1' })
-  @IsUrl()
-  @IsOptional()
-  githubIssueUrl?: string;
-
-  @ApiProperty({ type: [String], required: false })
-  @IsOptional()
-  attachments?: string[];
-}
+export class CreateBountyDto extends createZodDto(CreateBountySchema) {}

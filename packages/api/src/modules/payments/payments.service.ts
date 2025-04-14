@@ -16,7 +16,7 @@ export class PaymentsService {
     private usersService: UsersService,
   ) {
     this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY'), {
-      apiVersion: '2023-10-16',
+      apiVersion: '2024-04-10' as any,
     });
   }
 
@@ -46,7 +46,7 @@ export class PaymentsService {
     }
 
     // Calculate amount including platform fee (5%)
-    const amount = Math.round(bounty.price * 100); // Convert to cents
+    const amount = Math.round(Number(bounty.price) * 100); // Convert to cents
     const platformFee = Math.round(amount * 0.05); // 5% fee
     const totalAmount = amount + platformFee;
 
@@ -134,7 +134,7 @@ export class PaymentsService {
       throw new BadRequestException('Assignee has not set up payment information');
     }
 
-    const amount = Math.round(bounty.price * 100); // Convert to cents
+    const amount = Math.round(Number(bounty.price) * 100); // Convert to cents
     const platformFee = Math.round(amount * 0.05); // 5% fee
     const developerAmount = amount - platformFee;
 

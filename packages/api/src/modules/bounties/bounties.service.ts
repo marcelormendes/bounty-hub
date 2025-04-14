@@ -13,10 +13,22 @@ export class BountiesService {
       throw new ForbiddenException('Only clients and admins can create bounties');
     }
 
+    // Extract required fields from DTO to ensure they are present
+    const { title, description, price, type } = createBountyDto;
+    
     return this.prisma.bounty.create({
       data: {
-        ...createBountyDto,
-        creatorId: creator.id,
+        title,
+        description,
+        price,
+        type,
+        githubIssueUrl: createBountyDto.githubIssueUrl,
+        attachments: createBountyDto.attachments,
+        creator: {
+          connect: {
+            id: creator.id,
+          },
+        },
         status: BountyStatus.OPEN,
       },
     });
@@ -167,9 +179,9 @@ export class BountiesService {
     }
 
     if (
-      bounty.assigneeId !== user.id && // Assignee can release
-      bounty.creatorId !== user.id && // Creator can release
-      user.role !== UserRole.ADMIN // Admin can release
+      bounty.assigneeId !== user.id &&
+      bounty.creatorId !== user.id && 
+      user.role !== UserRole.ADMIN 
     ) {
       throw new ForbiddenException('You do not have permission to release this bounty');
     }

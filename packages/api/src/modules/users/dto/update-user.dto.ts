@@ -1,51 +1,46 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { UserRole } from '../entities/user.entity';
+import { createZodDto } from '@anatine/zod-nestjs';
+import { extendApi } from '@anatine/zod-openapi';
+import { z } from 'zod';
+import { UserRole } from '@prisma/client';
 
-export class UpdateUserDto {
-  @ApiProperty({ required: false })
-  @IsEmail()
-  @IsOptional()
-  email?: string;
+// Use .partial() to make all fields optional for update
+const UpdateUserSchema = z.object({
+  email: extendApi(z.string().email().optional(), {
+    description: 'User email address',
+    example: 'john@example.com',
+  }),
+  firstName: extendApi(z.string().optional(), {
+    description: 'User first name',
+    example: 'John',
+  }),
+  lastName: extendApi(z.string().optional(), {
+    description: 'User last name',
+    example: 'Doe',
+  }),
+  password: extendApi(z.string().min(8).optional(), {
+    description: 'User password (min 8 characters)',
+    example: 'password123',
+  }),
+  role: extendApi(z.nativeEnum(UserRole).optional(), {
+    description: 'User role',
+    example: UserRole.DEVELOPER,
+  }),
+  profileImage: extendApi(z.string().optional(), {
+    description: 'URL or identifier for the user profile image',
+    example: 'https://example.com/images/profile.jpg',
+  }),
+  bio: extendApi(z.string().optional(), {
+    description: 'Short user biography',
+    example: 'Experienced software engineer with 5 years in web development.',
+  }),
+  githubUrl: extendApi(z.string().url().optional(), {
+    description: 'URL to the user GitHub profile',
+    example: 'https://github.com/username',
+  }),
+  portfolioUrl: extendApi(z.string().url().optional(), {
+    description: 'URL to the user portfolio website',
+    example: 'https://portfolio.example.com',
+  }),
+});
 
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  firstName?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  lastName?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  @MinLength(8)
-  password?: string;
-
-  @ApiProperty({ enum: UserRole, required: false })
-  @IsEnum(UserRole)
-  @IsOptional()
-  role?: UserRole;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  profileImage?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  bio?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  githubUrl?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  portfolioUrl?: string;
-}
+export class UpdateUserDto extends createZodDto(UpdateUserSchema) {}

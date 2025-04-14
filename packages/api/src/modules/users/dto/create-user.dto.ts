@@ -1,51 +1,42 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
-import { UserRole } from '../entities/user.entity';
+import { createZodDto } from '@anatine/zod-nestjs';
+import { extendApi } from '@anatine/zod-openapi';
+import { z } from 'zod';
+import { UserRole } from '@prisma/client';
 
-export class CreateUserDto {
-  @ApiProperty({ example: 'john@example.com' })
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
+const CreateUserSchema = z.object({
+  email: extendApi(z.string().email(), {
+    description: 'User email address',
+    example: 'john@example.com',
+  }),
+  firstName: extendApi(z.string().min(1), {
+    description: 'User first name',
+    example: 'John',
+  }),
+  lastName: extendApi(z.string().min(1), {
+    description: 'User last name',
+    example: 'Doe',
+  }),
+  password: extendApi(z.string().min(8), {
+    description: 'User password (min 8 characters)',
+    example: 'password123',
+  }),
+  role: extendApi(z.nativeEnum(UserRole).optional(), {
+    description: 'User role',
+    example: UserRole.DEVELOPER,
+  }),
+  profileImage: extendApi(z.string().optional(), {
+    description: 'URL or identifier for the user profile image',
+  }),
+  bio: extendApi(z.string().optional(), {
+    description: 'Short user biography',
+  }),
+  // Assuming these should be URLs, adding .url() validation
+  githubUrl: extendApi(z.string().url().optional(), {
+    description: 'URL to the user GitHub profile',
+  }),
+  portfolioUrl: extendApi(z.string().url().optional(), {
+    description: 'URL to the user portfolio website',
+  }),
+});
 
-  @ApiProperty({ example: 'John' })
-  @IsString()
-  @IsNotEmpty()
-  firstName: string;
-
-  @ApiProperty({ example: 'Doe' })
-  @IsString()
-  @IsNotEmpty()
-  lastName: string;
-
-  @ApiProperty({ example: 'password123' })
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(8)
-  password: string;
-
-  @ApiProperty({ enum: UserRole, example: UserRole.DEVELOPER })
-  @IsEnum(UserRole)
-  @IsOptional()
-  role?: UserRole;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  profileImage?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  bio?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  githubUrl?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  portfolioUrl?: string;
-}
+export class CreateUserDto extends createZodDto(CreateUserSchema) {}
