@@ -1,13 +1,27 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output = "./diagram.md"      // Set filename to .md
+  outputFormat = "markdown"   // Set format to markdown
+  theme = "dark"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  website   String?
+  users     User[]
+  bounties  Bounty[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -23,8 +37,12 @@ model User {
   portfolioUrl         String?
   stripeCustomerId     String?
   stripeConnectAccountId String?
+  company              Company?  @relation(fields: [companyId], references: [id])
+  companyId            String?
   createdBounties      Bounty[]  @relation("CreatedBounties")
   assignedBounties     Bounty[]  @relation("AssignedBounties")
+  claims               BountyClaim[]
+  payments             Payment[]
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 }
@@ -43,12 +61,35 @@ model Bounty {
   creatorId       String
   assignee        User?         @relation("AssignedBounties", fields: [assigneeId], references: [id])
   assigneeId      String?
-  assignedAt      DateTime?
-  completedAt     DateTime?
-  approvedAt      DateTime?
-  paidAt          DateTime?
+  company         Company?      @relation(fields: [companyId], references: [id])
+  companyId       String?
+  claims          BountyClaim[]
+  payments        Payment[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+model BountyClaim {
+  id        String      @id @default(uuid())
+  bounty    Bounty      @relation(fields: [bountyId], references: [id])
+  bountyId  String
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String
+  status    ClaimStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+}
+
+model Payment {
+  id         String        @id @default(uuid())
+  bounty     Bounty        @relation(fields: [bountyId], references: [id])
+  bountyId   String
+  user       User          @relation(fields: [userId], references: [id])
+  userId     String
+  amount     Decimal
+  status     PaymentStatus
+  stripeId   String?
+  createdAt  DateTime      @default(now())
+  paidAt     DateTime?
 }
 
 enum UserRole {
@@ -70,4 +111,18 @@ enum BountyStatus {
 enum BountyType {
   DEVELOPMENT
   DESIGN
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }
