@@ -1,0 +1,562 @@
+/* Import statements must come first */
+@import url('https://fonts.googleapis.com/css2?family=Rye&family=IM+Fell+English&family=Playfair+Display:wght@400;700&display=swap');
+
+@import "tailwindcss";
+
+/* Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --paper-color: #f5e9d0;
+  --ink-color: #2b1910;
+  --accent-color: #8b3e0c;
+  --shadow-color: rgba(0, 0, 0, 0.25);
+  --gold-color: #d4af37;
+  --background-color: #3a2a1d; /* Darker brown background */
+}
+
+body {
+  background-color: var(--background-color);
+  font-family: 'IM Fell English', 'Times New Roman', Times, serif;
+  color: var(--ink-color);
+  line-height: 1.6;
+}
+
+/* Background and Container Styles */
+.bg-western-paper {
+  position: relative;
+  background-color: var(--background-color);
+  padding: 2rem 0;
+  min-height: 100vh; /* Ensures content fits in viewport */
+  display: flex;
+  align-items: center;
+  overflow: hidden; /* Prevent background elements from causing scrollbars */
+}
+
+/* Background decorative elements */
+.bg-silhouette {
+  position: absolute;
+  width: 250px;
+  height: 350px;
+  background-image: url('/cowgirl-silhouette.svg'); /* Verify this path */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.2; /* Increased opacity to make it more visible */
+  z-index: 0;
+}
+
+.silhouette-1 {
+  top: 5%;
+  left: 5%;
+  transform: rotate(-15deg);
+}
+
+.silhouette-2 {
+  bottom: 10%;
+  right: 8%;
+  transform: rotate(10deg) scale(0.8);
+}
+
+.silhouette-3 {
+  top: 50%;
+  left: 15%;
+  transform: translateY(-50%) scale(0.7);
+}
+
+/* Additional cowgirl silhouettes */
+.silhouette-4 {
+  top: 15%;
+  right: 12%;
+  transform: rotate(-5deg) scale(0.65);
+}
+
+.silhouette-5 {
+  bottom: 15%;
+  left: 40%;
+  transform: rotate(15deg) scale(0.75);
+}
+
+.silhouette-6 {
+  top: 70%;
+  right: 20%;
+  transform: rotate(-12deg) scale(0.85);
+}
+
+/* Two more cowgirl silhouettes */
+.silhouette-7 {
+  top: 30%;
+  right: 5%;
+  transform: rotate(8deg) scale(0.9);
+}
+
+.silhouette-8 {
+  bottom: 30%;
+  left: 10%;
+  transform: rotate(-20deg) scale(0.8);
+}
+
+/* Four additional cowgirl silhouettes */
+.silhouette-9 {
+  top: 40%;
+  right: 35%;
+  transform: rotate(15deg) scale(0.75);
+}
+
+.silhouette-10 {
+  bottom: 5%;
+  left: 25%;
+  transform: rotate(-8deg) scale(0.85);
+}
+
+.silhouette-11 {
+  top: 20%;
+  left: 30%;
+  transform: rotate(22deg) scale(0.7);
+}
+
+.silhouette-12 {
+  bottom: 40%;
+  right: 15%;
+  transform: rotate(-18deg) scale(0.82);
+}
+
+.wanted-poster {
+  position: relative;
+  z-index: 1; /* Place above background decorations */
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh; /* Limit height to fit viewport */
+  margin: 1rem auto; /* Reduced from 2rem */
+  filter: drop-shadow(0 10px 15px var(--shadow-color));
+  transition: transform 0.3s ease;
+  overflow-y: auto; /* Allow scrolling within the poster if needed */
+}
+
+.wanted-poster:hover {
+  transform: scale(1.01);
+}
+
+.wanted-poster-outer {
+  background-color: var(--paper-color);
+  background-image: url('/old-paper.jpg');
+  background-blend-mode: multiply;
+  border: 5px double var(--ink-color);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Decorative Elements */
+.wanted-decoration {
+  width: 90%;
+  height: 30px;
+  background-image: url('/rope-border.png');
+  background-size: contain;
+  background-repeat: repeat-x;
+  background-position: center;
+  margin: 0.5rem 0;
+}
+
+.top-decoration {
+  transform: rotate(180deg);
+  margin-bottom: 1rem;
+}
+
+.bottom-decoration {
+  margin-top: 1rem;
+}
+
+.corner-decoration {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-image: url('/corner-decoration.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.top-left {
+  top: 10px;
+  left: 10px;
+}
+
+.top-right {
+  top: 10px;
+  right: 10px;
+  transform: rotate(90deg);
+}
+
+.bottom-left {
+  bottom: 10px;
+  left: 10px;
+  transform: rotate(270deg);
+}
+
+.bottom-right {
+  bottom: 10px;
+  right: 10px;
+  transform: rotate(180deg);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  width: 80%;
+  margin: 1rem auto; /* Reduced from 1.5rem */
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--ink-color);
+}
+
+.divider-icon {
+  padding: 0 10px;
+  font-size: 1.5rem;
+  color: var(--accent-color);
+}
+
+/* Typography */
+.wanted-headline {
+  font-family: 'Rye', serif;
+  font-size: clamp(3rem, 10vw, 5rem);
+  color: var(--ink-color);
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-shadow: 2px 2px 4px var(--shadow-color);
+  margin-bottom: 1rem;
+}
+
+.wanted-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 5vw, 2.3rem); /* Increased font size */
+  font-weight: bold;
+  color: var(--accent-color);
+  margin: 1rem 0; /* Reduced from 1.5rem */
+  text-align: center;
+  position: relative;
+}
+
+.wanted-section-title::after {
+  content: '';
+  display: block;
+  width: 70%;
+  height: 2px;
+  background: var(--accent-color);
+  margin: 0.5rem auto 0;
+}
+
+/* Content Styles */
+.wanted-poster-inner {
+  border: 2px solid var(--ink-color);
+  margin: 1rem 0;
+  padding: 1.8rem 1.5rem; /* Slightly reduced padding */
+  width: 85%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  background-color: rgba(245, 233, 208, 0.8); /* More opaque for better readability */
+}
+
+.wanted-text {
+  color: var(--ink-color);
+  font-size: clamp(1.1rem, 2.5vw, 1.3rem); /* Increased font size */
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  max-width: 95%;
+}
+
+.wanted-list-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Always show 2 columns */
+  gap: 0.75rem; /* Reduced gap */
+  width: 100%;
+  margin: 0.75rem 0; /* Reduced margins */
+}
+
+@media (max-width: 640px) {
+  .wanted-list-container {
+    grid-template-columns: 1fr; /* Only on very small screens */
+  }
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.75rem; /* Reduced padding */
+  transition: transform 0.2s ease;
+  border: 1px solid var(--ink-color);
+  background-color: #e0c9a6; /* Slightly darker, more solid color */
+  border-radius: 5px;
+}
+
+.feature-item:hover {
+  transform: translateY(-5px);
+}
+
+.feature-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 0.75rem;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.icon-no-tape {
+  background-image: url('/scroll.svg');
+}
+
+.icon-outlaws {
+  background-image: url('/cowboy-hat.svg');
+}
+
+.icon-hunt {
+  background-image: url('/target.svg');
+}
+
+.icon-payouts {
+  background-image: url('/money-bag.svg');
+}
+
+.feature-item p {
+  font-size: clamp(1rem, 1.8vw, 1.2rem); /* Increased font size */
+  text-align: center;
+  line-height: 1.5;
+}
+
+.feature-item strong {
+  color: var(--accent-color);
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Decorative elements */
+.cowboy-skull {
+  width: 80px;
+  height: 80px;
+  background-image: url('/cowboy-skull.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin: 0 auto -15px;
+  opacity: 0.8; /* Increased visibility */
+  filter: brightness(0.4); /* Less darkening */
+}
+
+.logo-decoration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.badge-icon {
+  width: 60px;
+  height: 60px;
+  background-image: url('/sheriff-badge.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center; /* Ensure it's centered */
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  transform: rotate(15deg);
+  filter: brightness(0.85);
+}
+
+.western-credits {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  margin-top: 0.5rem;
+  font-family: sans-serif;
+}
+
+.western-credits a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.western-credits a:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Button Styles */
+.wanted-button {
+  font-family: 'Rye', serif;
+  background-color: var(--paper-color);
+  border: 2px solid var(--ink-color);
+  color: var(--ink-color);
+  padding: 1rem 2rem; /* Larger button */
+  font-size: clamp(1.1rem, 2.2vw, 1.3rem); /* Increased font size */
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 1.5rem;
+  box-shadow: 3px 3px 0 var(--shadow-color);
+}
+
+.wanted-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--ink-color);
+  transition: all 0.3s;
+  z-index: 0;
+}
+
+.wanted-button:hover::before {
+  left: 0;
+}
+
+.button-text {
+  position: relative;
+  z-index: 1;
+  transition: color 0.3s;
+}
+
+.wanted-button:hover .button-text {
+  color: var(--paper-color);
+}
+
+.wanted-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--shadow-color);
+}
+
+.gun-icon {
+  width: 30px;
+  height: 30px;
+  background-image: url('/gun.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-right: 10px;
+  position: relative; /* Ensure it's visible */
+  z-index: 2; /* Above the button hover effect */
+}
+
+/* Reward Section */
+.reward-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1.5rem; /* Reduced from 2rem */
+  width: 100%;
+  position: relative;
+}
+
+.reward-decoration {
+  width: 70%;
+  height: 20px;
+  background-image: url('/reward-decoration.png');
+  background-size: contain;
+  background-repeat: repeat-x;
+  margin: 0.5rem 0;
+}
+
+.reward-label {
+  font-family: 'Rye', serif;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  color: var(--ink-color);
+  text-transform: uppercase;
+  font-weight: bold;
+  line-height: 1;
+  text-shadow: 2px 2px 4px var(--shadow-color);
+}
+
+.reward-amount {
+  font-family: 'Rye', serif;
+  font-size: clamp(3rem, 10vw, 5rem);
+  color: var(--accent-color);
+  font-weight: bold;
+  line-height: 1.2;
+  text-shadow: 2px 2px 0px var(--ink-color), 4px 4px 6px var(--shadow-color);
+}
+
+.horseshoe {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-image: url('/horseshoe.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%) rotate(5deg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .wanted-poster {
+    width: 95%;
+    margin: 1rem auto;
+  }
+  
+  .wanted-poster-inner {
+    padding: 1.5rem 1rem;
+    width: 90%;
+  }
+  
+  .corner-decoration {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+/* Compact mode for taller screens */
+@media (min-height: 800px) {
+  .wanted-poster {
+    max-height: none; /* Allow natural height */
+  }
+}
+
+/* Styles for shorter screens */
+@media (max-height: 700px) {
+  .wanted-headline {
+    font-size: clamp(2.5rem, 8vw, 4rem); /* Smaller headline */
+    margin-bottom: 0.5rem;
+  }
+  
+  .reward-label {
+    font-size: clamp(2rem, 7vw, 3.5rem); /* Smaller reward text */
+  }
+  
+  .reward-amount {
+    font-size: clamp(2.5rem, 9vw, 4.5rem); /* Smaller reward amount */
+  }
+  
+  .wanted-decoration {
+    height: 20px; /* Smaller decorations */
+  }
+  
+  .feature-icon {
+    width: 40px; /* Smaller icons */
+    height: 40px;
+  }
+}

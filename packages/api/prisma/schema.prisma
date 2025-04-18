@@ -14,7 +14,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Company {
+model Client {
   id        String   @id @default(uuid())
   name      String
   website   String?
@@ -25,61 +25,58 @@ model Company {
 }
 
 model User {
-  id                   String    @id @default(uuid())
-  email                String    @unique
+  id                   String    @id
   firstName            String
   lastName             String
-  password             String
   role                 UserRole  @default(DEVELOPER)
-  profileImage         String?
   bio                  String?
-  githubUrl            String?
-  githubAccessToken    String?
-  githubRefreshToken   String?
-  githubTokenExpiresAt DateTime?
+  githubLogin          String? @unique
   portfolioUrl         String?
   stripeCustomerId     String?
   stripeConnectAccountId String?
-  company              Company?  @relation(fields: [companyId], references: [id])
-  companyId            String?
-  createdBounties      Bounty[]  @relation("CreatedBounties")
-  assignedBounties     Bounty[]  @relation("AssignedBounties")
-  claims               BountyClaim[]
-  payments             Payment[]
+  client              Client?  @relation(fields: [clientId], references: [id])
+  clientId            String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+
+  clients      Client[]
+  claims       BountyClaim[]
+  assigned     Bounty[]      @relation("AssignedBounties")
+  created      Bounty[]      @relation("CreatedBounties")
+  payments     Payment[]
 }
 
 model Bounty {
-  id              String        @id @default(uuid())
-  title           String
-  description     String
-  type            BountyType    @default(DEVELOPMENT)
-  price           Decimal       @db.Decimal(10, 2)
-  status          BountyStatus  @default(OPEN)
-  githubIssueUrl  String?
-  githubPRUrl     String?
-  attachments     Json?
-  creator         User          @relation("CreatedBounties", fields: [creatorId], references: [id])
-  creatorId       String
-  assignee        User?         @relation("AssignedBounties", fields: [assigneeId], references: [id])
-  assigneeId      String?
-  company         Company?      @relation(fields: [companyId], references: [id])
-  companyId       String?
-  claims          BountyClaim[]
-  payments        Payment[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id          uuid      @id @default(uuid())
+  clientId    uuid
+  assigneeId  uuid?
+  title       String
+  description String
+  reward      Decimal    @db.Decimal(10,2)
+  status      BountyStatus @default(OPEN) // OPEN → CLAIMED → IN_PROGRESS → COMPLETED → APPROVED → PAID
+  labels      String[]   @db.VarChar(32)  // tags / skills
+  githubIssueUrl String  @unique
+  githubPrUrl    String?
+  attachments Json?
+  deadline    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status, clientId])
 }
 
+
 model BountyClaim {
-  id        String      @id @default(uuid())
-  bounty    Bounty      @relation(fields: [bountyId], references: [id])
-  bountyId  String
-  user      User        @relation(fields: [userId], references: [id])
-  userId    String
-  status    ClaimStatus @default(PENDING)
-  createdAt DateTime    @default(now())
+  id         uuid @id @default(uuid())
+  bountyId   uuid
+  userId     uuid
+  status     ClaimStatus  @default(PENDING) // PENDING → ACCEPTED / DECLINED / EXPIRED / WITHDRAWN
+  expiresAt  DateTime     // set to now() + 24h
+  createdAt  DateTime     @default(now())
+
+  @@unique([bountyId, userId])          // one claim per dev per bounty
+  @@index([status, expiresAt])
+  @@index([userId, createdAt])          // quota checks
 }
 
 model Payment {
@@ -95,6 +92,16 @@ model Payment {
   paidAt     DateTime?
 }
 
+enum Tier { FREE PREMIUM_10 PREMIUM_20 }
+
+model User {
+  …
+  tier          Tier     @default(FREE)
+  weeklyClaims  Int      @default(0)
+  claimsResetAt DateTime @default(date_trunc('week', now()) + interval '1 week')
+}
+
+
 enum UserRole {
   CLIENT
   DEVELOPER
@@ -109,11 +116,6 @@ enum BountyStatus {
   APPROVED
   REJECTED
   PAID
-}
-
-enum BountyType {
-  DEVELOPMENT
-  DESIGN
 }
 
 enum ClaimStatus {
