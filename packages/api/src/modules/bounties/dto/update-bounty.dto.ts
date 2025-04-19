@@ -1,7 +1,7 @@
-import { createZodDto } from '@anatine/zod-nestjs';
-import { extendApi } from '@anatine/zod-openapi';
-import { BountyStatus, BountyType } from '@prisma/client';
-import { z } from 'zod';
+import { createZodDto } from '@anatine/zod-nestjs'
+import { extendApi } from '@anatine/zod-openapi'
+import { BountyStatus, BountyType } from '@prisma/client'
+import { z } from 'zod'
 
 // Use .partial() to make all fields optional for update
 const UpdateBountySchema = z
@@ -20,7 +20,7 @@ const UpdateBountySchema = z
     }),
     price: extendApi(z.number().min(1), {
       description: 'The price offered for completing the bounty',
-      example: 100.00,
+      example: 100.0,
     }),
     status: extendApi(z.nativeEnum(BountyStatus), {
       description: 'The current status of the bounty',
@@ -38,6 +38,6 @@ const UpdateBountySchema = z
       description: 'List of attachment URLs or identifiers',
     }),
   })
-  .partial(); // Make all fields optional
+  .partial() // Make all fields optional
 
 export class UpdateBountyDto extends createZodDto(UpdateBountySchema) {}

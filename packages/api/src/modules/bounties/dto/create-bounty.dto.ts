@@ -1,7 +1,7 @@
-import { createZodDto } from '@anatine/zod-nestjs';
-import { extendApi } from '@anatine/zod-openapi';
-import { BountyType } from '@prisma/client';
-import { z } from 'zod';
+import { createZodDto } from '@anatine/zod-nestjs'
+import { extendApi } from '@anatine/zod-openapi'
+import { BountyType } from '@prisma/client'
+import { z } from 'zod'
 
 const CreateBountySchema = z.object({
   title: extendApi(z.string().min(1), {
@@ -18,7 +18,7 @@ const CreateBountySchema = z.object({
   }),
   price: extendApi(z.number().min(1), {
     description: 'The price offered for completing the bounty',
-    example: 100.00,
+    example: 100.0,
   }),
   githubIssueUrl: extendApi(z.string().url().optional(), {
     description: 'Optional URL to the related GitHub issue',
@@ -27,6 +27,6 @@ const CreateBountySchema = z.object({
   attachments: extendApi(z.array(z.string()).optional(), {
     description: 'Optional list of attachment URLs or identifiers',
   }),
-});
+})
 
 export class CreateBountyDto extends createZodDto(CreateBountySchema) {}

@@ -1,7 +1,7 @@
-import { createZodDto } from '@anatine/zod-nestjs';
-import { extendApi } from '@anatine/zod-openapi';
-import { z } from 'zod';
-import { UserRole } from '@prisma/client';
+import { createZodDto } from '@anatine/zod-nestjs'
+import { extendApi } from '@anatine/zod-openapi'
+import { z } from 'zod'
+import { UserRole } from '@prisma/client'
 
 const CreateUserSchema = z.object({
   email: extendApi(z.string().email(), {
@@ -16,10 +16,7 @@ const CreateUserSchema = z.object({
     description: 'User last name',
     example: 'Doe',
   }),
-  password: extendApi(z.string().min(8), {
-    description: 'User password (min 8 characters)',
-    example: 'password123',
-  }),
+  // password field removed
   role: extendApi(z.nativeEnum(UserRole).optional(), {
     description: 'User role',
     example: UserRole.DEVELOPER,
@@ -37,6 +34,6 @@ const CreateUserSchema = z.object({
   portfolioUrl: extendApi(z.string().url().optional(), {
     description: 'URL to the user portfolio website',
   }),
-});
+})
 
 export class CreateUserDto extends createZodDto(CreateUserSchema) {}

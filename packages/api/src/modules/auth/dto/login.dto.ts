@@ -1,6 +1,6 @@
-import { createZodDto } from '@anatine/zod-nestjs';
-import { extendApi } from '@anatine/zod-openapi';
-import { z } from 'zod';
+import { createZodDto } from '@anatine/zod-nestjs'
+import { extendApi } from '@anatine/zod-openapi'
+import { z } from 'zod'
 
 const LoginSchema = z.object({
   email: extendApi(z.string().email(), {
@@ -11,6 +11,6 @@ const LoginSchema = z.object({
     description: 'User password',
     example: 'password123',
   }),
-});
+})
 
 export class LoginDto extends createZodDto(LoginSchema) {}

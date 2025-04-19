@@ -1,7 +1,7 @@
-import { createZodDto } from '@anatine/zod-nestjs';
-import { extendApi } from '@anatine/zod-openapi';
-import { z } from 'zod';
-import { UserRole } from '@prisma/client';
+import { createZodDto } from '@anatine/zod-nestjs'
+import { extendApi } from '@anatine/zod-openapi'
+import { z } from 'zod'
+import { UserRole } from '@prisma/client'
 
 // Use .partial() to make all fields optional for update
 const UpdateUserSchema = z.object({
@@ -17,10 +17,7 @@ const UpdateUserSchema = z.object({
     description: 'User last name',
     example: 'Doe',
   }),
-  password: extendApi(z.string().min(8).optional(), {
-    description: 'User password (min 8 characters)',
-    example: 'password123',
-  }),
+  // password field removed
   role: extendApi(z.nativeEnum(UserRole).optional(), {
     description: 'User role',
     example: UserRole.DEVELOPER,
@@ -41,6 +38,6 @@ const UpdateUserSchema = z.object({
     description: 'URL to the user portfolio website',
     example: 'https://portfolio.example.com',
   }),
-});
+})
 
 export class UpdateUserDto extends createZodDto(UpdateUserSchema) {}

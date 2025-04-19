@@ -16,6 +16,7 @@ datasource db {
 
 model Client {
   id        String   @id @default(uuid())
+  email     String
   name      String
   website   String?
   users     User[]
@@ -25,17 +26,18 @@ model Client {
 }
 
 model User {
-  id                   String    @id
+  id                   String    @id @default(uuid())
+  email                String    @unique
   firstName            String
   lastName             String
   role                 UserRole  @default(DEVELOPER)
-  bio                  String?
   githubLogin          String? @unique
   portfolioUrl         String?
   stripeCustomerId     String?
   stripeConnectAccountId String?
-  client              Client?  @relation(fields: [clientId], references: [id])
-  clientId            String?
+  tier          Tier     @default(FREE)
+  monthyClaims  Int      @default(0)
+  claimsResetAt DateTime @default(dbgenerated("date_trunc('month', now()) + interval '1 month'"))
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -47,9 +49,13 @@ model User {
 }
 
 model Bounty {
-  id          uuid      @id @default(uuid())
-  clientId    uuid
-  assigneeId  uuid?
+  id          String    @id @default(uuid())
+  client   Client   @relation(fields: [clientId], references: [id])
+  clientId    String
+  creator  User     @relation("CreatedBounties", fields: [creatorId], references: [id])
+  creatorId String
+  assignee User?    @relation("AssignedBounties", fields: [assigneeId], references: [id])
+  assigneeId String?
   title       String
   description String
   reward      Decimal    @db.Decimal(10,2)
@@ -62,15 +68,19 @@ model Bounty {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  claims BountyClaim[]
+  payments Payment[]
+
   @@index([status, clientId])
 }
 
-
 model BountyClaim {
-  id         uuid @id @default(uuid())
-  bountyId   uuid
-  userId     uuid
-  status     ClaimStatus  @default(PENDING) // PENDING → ACCEPTED / DECLINED / EXPIRED / WITHDRAWN
+  id         String @id @default(uuid())
+  bounty   Bounty @relation(fields: [bountyId], references: [id])
+  bountyId String
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+  status     ClaimStatus  @default(PENDING) // PENDING → APPROVED / REJECTED / WITHDRAWN
   expiresAt  DateTime     // set to now() + 24h
   createdAt  DateTime     @default(now())
 
@@ -81,9 +91,9 @@ model BountyClaim {
 
 model Payment {
   id         String        @id @default(uuid())
-  bounty     Bounty        @relation(fields: [bountyId], references: [id])
+  bounty   Bounty @relation(fields: [bountyId], references: [id])
   bountyId   String
-  user       User          @relation(fields: [userId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
   userId     String
   amount     Decimal
   status     PaymentStatus
@@ -92,15 +102,11 @@ model Payment {
   paidAt     DateTime?
 }
 
-enum Tier { FREE PREMIUM_10 PREMIUM_20 }
-
-model User {
-  …
-  tier          Tier     @default(FREE)
-  weeklyClaims  Int      @default(0)
-  claimsResetAt DateTime @default(date_trunc('week', now()) + interval '1 week')
+enum Tier { 
+  FREE 
+  FREMIUM_10 
+  PREMIUM_20 
 }
-
 
 enum UserRole {
   CLIENT

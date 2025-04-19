@@ -1,6 +1,14 @@
 ```mermaid
 erDiagram
 
+        Tier {
+            FREE FREE
+FREMIUM_10 FREMIUM_10
+PREMIUM_20 PREMIUM_20
+        }
+    
+
+
         UserRole {
             CLIENT CLIENT
 DEVELOPER DEVELOPER
@@ -21,13 +29,6 @@ PAID PAID
     
 
 
-        BountyType {
-            DEVELOPMENT DEVELOPMENT
-DESIGN DESIGN
-        }
-    
-
-
         ClaimStatus {
             PENDING PENDING
 APPROVED APPROVED
@@ -44,8 +45,9 @@ FAILED FAILED
 REFUNDED REFUNDED
         }
     
-  "Company" {
+  "Client" {
     String id "🗝️"
+    String email 
     String name 
     String website "❓"
     DateTime createdAt 
@@ -58,17 +60,14 @@ REFUNDED REFUNDED
     String email 
     String firstName 
     String lastName 
-    String password 
     UserRole role 
-    String profileImage "❓"
-    String bio "❓"
-    String githubUrl "❓"
-    String githubAccessToken "❓"
-    String githubRefreshToken "❓"
-    DateTime githubTokenExpiresAt "❓"
+    String githubLogin "❓"
     String portfolioUrl "❓"
     String stripeCustomerId "❓"
     String stripeConnectAccountId "❓"
+    Tier tier 
+    Int monthyClaims 
+    DateTime claimsResetAt 
     DateTime createdAt 
     DateTime updatedAt 
     }
@@ -78,12 +77,13 @@ REFUNDED REFUNDED
     String id "🗝️"
     String title 
     String description 
-    BountyType type 
-    Decimal price 
+    Decimal reward 
     BountyStatus status 
-    String githubIssueUrl "❓"
-    String githubPRUrl "❓"
+    String labels 
+    String githubIssueUrl 
+    String githubPrUrl "❓"
     Json attachments "❓"
+    DateTime deadline "❓"
     DateTime createdAt 
     DateTime updatedAt 
     }
@@ -92,6 +92,7 @@ REFUNDED REFUNDED
   "BountyClaim" {
     String id "🗝️"
     ClaimStatus status 
+    DateTime expiresAt 
     DateTime createdAt 
     }
   
@@ -105,19 +106,19 @@ REFUNDED REFUNDED
     DateTime paidAt "❓"
     }
   
-    "Company" o{--}o "User" : "users"
-    "Company" o{--}o "Bounty" : "bounties"
+    "Client" o{--}o "User" : "users"
+    "Client" o{--}o "Bounty" : "bounties"
     "User" o|--|| "UserRole" : "enum:role"
-    "User" o|--|o "Company" : "company"
-    "User" o{--}o "Bounty" : "createdBounties"
-    "User" o{--}o "Bounty" : "assignedBounties"
+    "User" o|--|| "Tier" : "enum:tier"
+    "User" o{--}o "Client" : "clients"
     "User" o{--}o "BountyClaim" : "claims"
+    "User" o{--}o "Bounty" : "assigned"
+    "User" o{--}o "Bounty" : "created"
     "User" o{--}o "Payment" : "payments"
-    "Bounty" o|--|| "BountyType" : "enum:type"
-    "Bounty" o|--|| "BountyStatus" : "enum:status"
+    "Bounty" o|--|| "Client" : "client"
     "Bounty" o|--|| "User" : "creator"
     "Bounty" o|--|o "User" : "assignee"
-    "Bounty" o|--|o "Company" : "company"
+    "Bounty" o|--|| "BountyStatus" : "enum:status"
     "Bounty" o{--}o "BountyClaim" : "claims"
     "Bounty" o{--}o "Payment" : "payments"
     "BountyClaim" o|--|| "Bounty" : "bounty"

@@ -1,9 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common'
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { UsersService } from './users.service'
+import { CreateUserDto } from './dto/create-user.dto'
+import { UpdateUserDto } from './dto/update-user.dto'
 
 @ApiTags('users')
 @Controller('users')
@@ -13,7 +22,7 @@ export class UsersController {
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
   create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+    return this.usersService.create(createUserDto)
   }
 
   @Get()
@@ -21,7 +30,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users' })
   findAll() {
-    return this.usersService.findAll();
+    return this.usersService.findAll()
   }
 
   @Get(':id')
@@ -29,7 +38,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a user by id' })
   findOne(@Param('id') id: string) {
-    return this.usersService.findOneById(id);
+    return this.usersService.findOneById(id)
   }
 
   @Patch(':id')
@@ -37,7 +46,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a user' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(id, updateUserDto)
   }
 
   @Delete(':id')
@@ -45,6 +54,6 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a user' })
   remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+    return this.usersService.remove(id)
   }
 }
