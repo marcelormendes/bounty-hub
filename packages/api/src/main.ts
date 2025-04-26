@@ -2,12 +2,17 @@ import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { AppModule } from './app.module'
+import * as express from 'express'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
 
   app.enableCors()
   app.useGlobalPipes(new ValidationPipe({ transform: true }))
+  app.use(
+    '/payments/connect-account/webhook',
+    express.raw({ type: 'application/json' }),
+  )
 
   const config = new DocumentBuilder()
     .setTitle('Bounty Hub API')

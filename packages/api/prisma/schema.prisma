@@ -19,29 +19,31 @@ model Client {
   email     String
   name      String
   website   String?
-  users     User[]
+  users     ClientUser[]
   bounties  Bounty[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model User {
-  id                   String    @id @default(uuid())
+  id                   String    @id
   email                String    @unique
   firstName            String
   lastName             String
   role                 UserRole  @default(DEVELOPER)
-  githubLogin          String? @unique
+  bio                  String?
+  githubUrl            String? @unique
   portfolioUrl         String?
   stripeCustomerId     String?
   stripeConnectAccountId String?
-  tier          Tier     @default(FREE)
-  monthyClaims  Int      @default(0)
-  claimsResetAt DateTime @default(dbgenerated("date_trunc('month', now()) + interval '1 month'"))
+  tier                 Tier     @default(FREE)
+  monthyClaims         Int      @default(0)
+  claimsResetAt        DateTime @default(dbgenerated("date_trunc('month', now()) + interval '1 month'"))
+  payoutsEnabled       Boolean @default(false)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  clients      Client[]
+  clients      ClientUser[]
   claims       BountyClaim[]
   assigned     Bounty[]      @relation("AssignedBounties")
   created      Bounty[]      @relation("CreatedBounties")
@@ -67,6 +69,7 @@ model Bounty {
   deadline    DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  releasedAt  DateTime?   
 
   claims BountyClaim[]
   payments Payment[]
@@ -102,16 +105,25 @@ model Payment {
   paidAt     DateTime?
 }
 
+model ClientUser { 
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+
+  @@id([clientId, userId])
+  @@index([userId])
+}
+
 enum Tier { 
   FREE 
-  FREMIUM_10 
+  FREEMIUM_10 
   PREMIUM_20 
 }
 
 enum UserRole {
   CLIENT
   DEVELOPER
-  DESIGNER
   ADMIN
 }
 

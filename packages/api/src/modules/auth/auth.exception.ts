@@ -1,18 +1,20 @@
-import { HttpStatus } from "@nestjs/common"
-import { BaseApiException } from "src/common/exceptions/api.exceptions"
-import authErrorCodes from './auth.error-codes.json'
+import { HttpStatus } from '@nestjs/common'
+import { CustomException } from '@common/exceptions/custom.exceptions'
 
+export const errorCodes: Record<string, string> = {
+  BHA001: 'Invalid or expired token',
+  BHA002: 'Supabase configuration is missing',
+}
 /**
- * Thrown when the Auth processing fails
+ * Thrown when a landmarks operation fails.
  */
-export class AuthException extends BaseApiException {
+export class AuthException extends CustomException {
   constructor(
     errorCode: string,
-    statusCode: number = HttpStatus.UNAUTHORIZED,
+    status: number = HttpStatus.INTERNAL_SERVER_ERROR,
     details?: unknown,
   ) {
-
-    const message = authErrorCodes[errorCode]
-    super('AuthenticationError', message, statusCode, details, errorCode)
+    const message = errorCodes[errorCode]
+    super(message, status, details, errorCode)
   }
 }

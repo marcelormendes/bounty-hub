@@ -1,9 +1,8 @@
 import { createZodDto } from '@anatine/zod-nestjs'
 import { extendApi } from '@anatine/zod-openapi'
 import { z } from 'zod'
-import { UserRole } from '@prisma/client'
+import { Tier, UserRole } from '@prisma/client'
 
-// Use .partial() to make all fields optional for update
 const UpdateUserSchema = z.object({
   email: extendApi(z.string().email().optional(), {
     description: 'User email address',
@@ -37,6 +36,18 @@ const UpdateUserSchema = z.object({
   portfolioUrl: extendApi(z.string().url().optional(), {
     description: 'URL to the user portfolio website',
     example: 'https://portfolio.example.com',
+  }),
+  tier: extendApi(z.nativeEnum(Tier).optional(), {
+    description: 'User tier',
+    example: Tier.FREE,
+  }),
+  stripeConnectAccountId: extendApi(z.string().optional().nullable(), {
+    description: 'Stripe Connect account ID',
+    example: 'acct_1234567890',
+  }),
+  payoutsEnabled: extendApi(z.boolean().optional(), {
+    description: 'Payouts enabled',
+    example: true,
   }),
 })
 

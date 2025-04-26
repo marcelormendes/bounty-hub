@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
-import { BountyStatus, BountyType } from '@prisma/client'
+import { BountyStatus } from '@prisma/client'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { BountiesService } from './bounties.service'
 import { CreateBountyDto } from './dto/create-bounty.dto'
@@ -33,12 +33,14 @@ export class BountiesController {
   @Get()
   @ApiOperation({ summary: 'Get all bounties with optional filtering' })
   @ApiQuery({ name: 'status', enum: BountyStatus, required: false })
-  @ApiQuery({ name: 'type', enum: BountyType, required: false })
+  @ApiQuery({ name: 'reward_min', required: false })
+  @ApiQuery({ name: 'reward_max', required: false })
   findAll(
     @Query('status') status?: BountyStatus,
-    @Query('type') type?: BountyType,
+    @Query('reward_min') rewardMin?: number,
+    @Query('reward_max') rewardMax?: number,
   ) {
-    return this.bountiesService.findAll({ status, type })
+    return this.bountiesService.findAll({ status, rewardMin, rewardMax })
   }
 
   @Get(':id')

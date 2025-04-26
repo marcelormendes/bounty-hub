@@ -3,7 +3,7 @@ erDiagram
 
         Tier {
             FREE FREE
-FREMIUM_10 FREMIUM_10
+FREEMIUM_10 FREEMIUM_10
 PREMIUM_20 PREMIUM_20
         }
     
@@ -12,7 +12,6 @@ PREMIUM_20 PREMIUM_20
         UserRole {
             CLIENT CLIENT
 DEVELOPER DEVELOPER
-DESIGNER DESIGNER
 ADMIN ADMIN
         }
     
@@ -61,13 +60,15 @@ REFUNDED REFUNDED
     String firstName 
     String lastName 
     UserRole role 
-    String githubLogin "❓"
+    String bio "❓"
+    String githubUrl "❓"
     String portfolioUrl "❓"
     String stripeCustomerId "❓"
     String stripeConnectAccountId "❓"
     Tier tier 
     Int monthyClaims 
     DateTime claimsResetAt 
+    Boolean payoutsEnabled 
     DateTime createdAt 
     DateTime updatedAt 
     }
@@ -86,6 +87,7 @@ REFUNDED REFUNDED
     DateTime deadline "❓"
     DateTime createdAt 
     DateTime updatedAt 
+    DateTime releasedAt "❓"
     }
   
 
@@ -106,11 +108,16 @@ REFUNDED REFUNDED
     DateTime paidAt "❓"
     }
   
-    "Client" o{--}o "User" : "users"
+
+  "ClientUser" {
+
+    }
+  
+    "Client" o{--}o "ClientUser" : "users"
     "Client" o{--}o "Bounty" : "bounties"
     "User" o|--|| "UserRole" : "enum:role"
     "User" o|--|| "Tier" : "enum:tier"
-    "User" o{--}o "Client" : "clients"
+    "User" o{--}o "ClientUser" : "clients"
     "User" o{--}o "BountyClaim" : "claims"
     "User" o{--}o "Bounty" : "assigned"
     "User" o{--}o "Bounty" : "created"
@@ -127,4 +134,6 @@ REFUNDED REFUNDED
     "Payment" o|--|| "Bounty" : "bounty"
     "Payment" o|--|| "User" : "user"
     "Payment" o|--|| "PaymentStatus" : "enum:status"
+    "ClientUser" o|--|| "Client" : "client"
+    "ClientUser" o|--|| "User" : "user"
 ```

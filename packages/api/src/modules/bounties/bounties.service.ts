@@ -1,57 +1,58 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common'
-import {
-  Bounty,
-  BountyStatus,
-  BountyType,
-  User,
-  UserRole,
-} from '@prisma/client'
-import { PrismaService } from '../../prisma/prisma.service'
+import { Injectable, HttpStatus } from '@nestjs/common'
+import { Bounty, BountyStatus, User, UserRole } from '@prisma/client'
+import { PrismaService } from '@common/prisma/prisma.service'
 import { CreateBountyDto } from './dto/create-bounty.dto'
 import { UpdateBountyDto } from './dto/update-bounty.dto'
+import { BountiesException } from './bounties.exception'
+import { UsersService } from '@modules/users/users.service'
 
 @Injectable()
 export class BountiesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private usersService: UsersService,
+  ) {}
 
   async create(
     createBountyDto: CreateBountyDto,
     creator: User,
   ): Promise<Bounty> {
     if (creator.role !== UserRole.CLIENT && creator.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'Only clients and admins can create bounties',
-      )
+      throw new BountiesException('BHB001', HttpStatus.FORBIDDEN)
     }
 
     // Extract required fields from DTO to ensure they are present
-    const { title, description, price, type } = createBountyDto
+    const {
+      title,
+      description,
+      reward,
+      labels,
+      githubIssueUrl,
+      attachments,
+      deadline,
+      clientId,
+    } = createBountyDto
 
     return this.prisma.bounty.create({
       data: {
+        clientId,
+        creatorId: creator.id,
         title,
         description,
-        price,
-        type,
-        githubIssueUrl: createBountyDto.githubIssueUrl,
-        attachments: createBountyDto.attachments,
-        creator: {
-          connect: {
-            id: creator.id,
-          },
-        },
+        reward,
+        ...(labels && { labels }),
+        ...(attachments && { attachments }),
+        ...(deadline && { deadline }),
         status: BountyStatus.OPEN,
+        githubIssueUrl,
       },
     })
   }
 
   async findAll(options?: {
     status?: BountyStatus
-    type?: BountyType
+    rewardMin?: number
+    rewardMax?: number
   }): Promise<Bounty[]> {
     const where: any = {}
 
@@ -59,8 +60,16 @@ export class BountiesService {
       where.status = options.status
     }
 
-    if (options?.type) {
-      where.type = options.type
+    if (options?.rewardMin) {
+      where.price = {
+        gte: options.rewardMin,
+      }
+    }
+
+    if (options?.rewardMax) {
+      where.price = {
+        lte: options.rewardMax,
+      }
     }
 
     return this.prisma.bounty.findMany({
@@ -85,7 +94,7 @@ export class BountiesService {
     })
 
     if (!bounty) {
-      throw new NotFoundException(`Bounty with ID ${id} not found`)
+      throw new BountiesException('BHB002', HttpStatus.NOT_FOUND, id)
     }
 
     return bounty
@@ -98,13 +107,21 @@ export class BountiesService {
   ): Promise<Bounty> {
     const bounty = await this.findOne(id)
 
-    // Only allow creator or admin to update most properties
-    if (bounty.creatorId !== user.id && user.role !== UserRole.ADMIN) {
-      // If not creator or admin, only allow assignee to update PR URL and status to completed
+    //check if user has access to this client
+    const hasAccess = await this.usersService.checkIfUserHasAccessToClient(
+      user.id,
+      bounty.clientId,
+    )
+
+    if (!hasAccess) {
+      throw new BountiesException('BHB017', HttpStatus.FORBIDDEN, user.id)
+    }
+
+    // Only allow client users to update most properties
+    if (user.role !== UserRole.ADMIN && user.role !== UserRole.CLIENT) {
+      // If not client or admin, only allow assignee to update PR URL and status to completed
       if (bounty.assigneeId !== user.id) {
-        throw new ForbiddenException(
-          'You do not have permission to update this bounty',
-        )
+        throw new BountiesException('BHB006', HttpStatus.FORBIDDEN)
       }
 
       // Assignee can only update specific fields
@@ -115,9 +132,7 @@ export class BountiesService {
       )
 
       if (invalidFields.length > 0) {
-        throw new ForbiddenException(
-          `You can only update: ${allowedFields.join(', ')}`,
-        )
+        throw new BountiesException('BHB007', HttpStatus.FORBIDDEN)
       }
 
       // Assignee can only set status to completed
@@ -125,7 +140,7 @@ export class BountiesService {
         updateBountyDto.status &&
         updateBountyDto.status !== BountyStatus.COMPLETED
       ) {
-        throw new ForbiddenException('You can only set status to completed')
+        throw new BountiesException('BHB008', HttpStatus.FORBIDDEN)
       }
     }
 
@@ -139,18 +154,14 @@ export class BountiesService {
           data.completedAt = new Date()
           break
         case BountyStatus.APPROVED:
-          if (user.id !== bounty.creatorId && user.role !== UserRole.ADMIN) {
-            throw new ForbiddenException(
-              'Only the creator or admin can approve a bounty',
-            )
+          if (user.role !== UserRole.ADMIN && user.role !== UserRole.CLIENT) {
+            throw new BountiesException('BHB009', HttpStatus.FORBIDDEN)
           }
           data.approvedAt = new Date()
           break
         case BountyStatus.PAID:
-          if (user.role !== UserRole.ADMIN) {
-            throw new ForbiddenException(
-              'Only admins can mark a bounty as paid',
-            )
+          if (user.role !== UserRole.ADMIN && user.role !== UserRole.CLIENT) {
+            throw new BountiesException('BHB010', HttpStatus.FORBIDDEN)
           }
           data.paidAt = new Date()
           break
@@ -171,13 +182,11 @@ export class BountiesService {
     const bounty = await this.findOne(id)
 
     if (bounty.creatorId !== user.id && user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'Only the creator or admin can delete a bounty',
-      )
+      throw new BountiesException('BHB011', HttpStatus.FORBIDDEN)
     }
 
     if (bounty.status !== BountyStatus.OPEN) {
-      throw new ForbiddenException('Only open bounties can be deleted')
+      throw new BountiesException('BHB012')
     }
 
     return this.prisma.bounty.delete({ where: { id } })
@@ -187,22 +196,18 @@ export class BountiesService {
     const bounty = await this.findOne(id)
 
     if (bounty.status !== BountyStatus.OPEN) {
-      throw new ForbiddenException(
-        'This bounty is not available for assignment',
-      )
+      throw new BountiesException('BHB013')
     }
 
     if (bounty.creatorId === user.id) {
-      throw new ForbiddenException(
-        'You cannot assign your own bounty to yourself',
-      )
+      throw new BountiesException('BHB014', HttpStatus.FORBIDDEN)
     }
 
     return this.prisma.bounty.update({
       where: { id },
       data: {
         assigneeId: user.id,
-        assignedAt: new Date(),
+        updatedAt: new Date(),
         status: BountyStatus.IN_PROGRESS,
       },
       include: {
@@ -214,27 +219,34 @@ export class BountiesService {
 
   async releaseBounty(id: string, user: User): Promise<Bounty> {
     const bounty = await this.findOne(id)
+    const hasAccess = await this.usersService.checkIfUserHasAccessToClient(
+      user.id,
+      bounty.clientId,
+    )
+
+    if (!hasAccess) {
+      throw new BountiesException('BHB017', HttpStatus.FORBIDDEN, user.id)
+    }
 
     if (bounty.status !== BountyStatus.IN_PROGRESS) {
-      throw new ForbiddenException('Only in-progress bounties can be released')
+      throw new BountiesException('BHB015')
     }
 
     if (
       bounty.assigneeId !== user.id &&
       bounty.creatorId !== user.id &&
-      user.role !== UserRole.ADMIN
+      user.role !== UserRole.ADMIN &&
+      user.role !== UserRole.CLIENT
     ) {
-      throw new ForbiddenException(
-        'You do not have permission to release this bounty',
-      )
+      throw new BountiesException('BHB016', HttpStatus.FORBIDDEN)
     }
 
     return this.prisma.bounty.update({
       where: { id },
       data: {
         assigneeId: null,
-        assignedAt: null,
         status: BountyStatus.OPEN,
+        releasedAt: new Date(),
       },
       include: {
         creator: true,

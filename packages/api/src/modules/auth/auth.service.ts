@@ -33,15 +33,10 @@ export class AuthService {
       error,
     } = await this.supabase.auth.getUser(token)
     if (error || !user) {
-      // BH001: Invalid or expired token
       throw new AuthException('BH001')
     }
-    // Optionally: Fetch user details from your own database if needed
-    // const appUser = await this.usersService.findOneById(user.id);
-    // if (!appUser) {
-    //   throw new UnauthorizedException('User not found in application database');
-    // }
-    return user // Return Supabase user object
+
+    return user
   }
 
   // Generate application-specific JWT if needed, or rely on Supabase token
@@ -55,7 +50,4 @@ export class AuthService {
       accessToken: this.jwtService.sign(payload),
     }
   }
-
-  // Login and Register methods are removed as they are handled by Supabase on the frontend.
-  // The backend only needs to validate the token provided by the frontend.
 }

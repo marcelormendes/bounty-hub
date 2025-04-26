@@ -1,14 +1,13 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common'
+import { HttpStatus, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { BountyStatus } from '@prisma/client'
 import Stripe from 'stripe'
 import { BountiesService } from '../bounties/bounties.service'
 import { UsersService } from '../users/users.service'
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto'
+import { PaymentsException } from './payments.exception'
+import { Request } from 'express'
+import { UpdateUserDto } from '@modules/users/dto/update-user.dto'
 
 @Injectable()
 export class PaymentsService {
@@ -19,12 +18,13 @@ export class PaymentsService {
     private bountiesService: BountiesService,
     private usersService: UsersService,
   ) {
-    this.stripe = new Stripe(
-      this.configService.get<string>('STRIPE_SECRET_KEY'),
-      {
-        apiVersion: '2024-04-10' as any,
-      },
-    )
+    const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY')
+    if (!stripeSecretKey) {
+      throw new PaymentsException('BHP001')
+    }
+    this.stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2024-04-10' as any,
+    })
   }
 
   async createPaymentIntent(
@@ -36,11 +36,11 @@ export class PaymentsService {
     )
 
     if (bounty.status !== BountyStatus.OPEN) {
-      throw new BadRequestException('This bounty is not available for payment')
+      throw new PaymentsException('BHP002')
     }
 
     if (bounty.creatorId !== userId) {
-      throw new BadRequestException('You can only pay for your own bounties')
+      throw new PaymentsException('BHP003')
     }
 
     // Get or create Stripe customer
@@ -58,7 +58,7 @@ export class PaymentsService {
     }
 
     // Calculate amount including platform fee (5%)
-    const amount = Math.round(Number(bounty.price) * 100) // Convert to cents
+    const amount = Math.round(Number(bounty.reward) * 100) // Convert to cents
     const platformFee = Math.round(amount * 0.05) // 5% fee
     const totalAmount = amount + platformFee
 
@@ -121,7 +121,7 @@ export class PaymentsService {
     const user = await this.usersService.findOneById(userId)
 
     if (!user.stripeConnectAccountId) {
-      throw new NotFoundException('No Stripe Connect account found')
+      throw new PaymentsException('BHP006')
     }
 
     const accountLink = await this.stripe.accountLinks.create({
@@ -134,21 +134,43 @@ export class PaymentsService {
     return { url: accountLink.url }
   }
 
+  async processConnectAccountWebhook(req: Request, sig: string) {
+    const stripeWebhookSecret = this.configService.get('STRIPE_WEBHOOK_SECRET')
+    if (!stripeWebhookSecret) {
+      throw new PaymentsException('BHP008')
+    }
+
+    const event = this.stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      stripeWebhookSecret,
+    )
+
+    if (event.type === 'account.updated') {
+      const acct = event.data.object as Stripe.Account
+
+      await this.usersService.updateMany({
+        where: { stripeConnectAccountId: acct.id },
+        data: { payoutsEnabled: acct.payouts_enabled },
+      })
+    }
+
+    return { received: true }
+  }
+
   async processBountyPayment(bountyId: string) {
     const bounty = await this.bountiesService.findOne(bountyId)
 
     if (bounty.status !== BountyStatus.APPROVED || !bounty.assigneeId) {
-      throw new BadRequestException('Bounty is not ready for payment')
+      throw new PaymentsException('BHP004')
     }
 
     const assignee = await this.usersService.findOneById(bounty.assigneeId)
     if (!assignee.stripeConnectAccountId) {
-      throw new BadRequestException(
-        'Assignee has not set up payment information',
-      )
+      throw new PaymentsException('BHP005')
     }
 
-    const amount = Math.round(Number(bounty.price) * 100) // Convert to cents
+    const amount = Math.round(Number(bounty.reward) * 100) // Convert to cents
     const platformFee = Math.round(amount * 0.05) // 5% fee
     const developerAmount = amount - platformFee
 
@@ -176,5 +198,44 @@ export class PaymentsService {
       amount: developerAmount / 100, // Convert back to dollars for display
       platformFee: platformFee / 100,
     }
+  }
+
+  async disconnectStripeAccount(userId: string) {
+    const user = await this.usersService.findOneById(userId)
+    const stripeClientId = this.configService.get('STRIPE_CLIENT_ID')
+
+    if (!stripeClientId) {
+      throw new PaymentsException('BHP010')
+    }
+
+    if (!user?.stripeConnectAccountId) throw new PaymentsException('BHP006')
+
+    const acctId = user.stripeConnectAccountId
+
+    try {
+      await this.stripe.accounts.del(acctId)
+    } catch (err: any) {
+      if (err.code !== 'account_invalid') {
+        throw new PaymentsException(
+          'BHP009',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          err,
+        )
+      }
+
+      await this.stripe.oauth.deauthorize({
+        client_id: stripeClientId,
+        stripe_user_id: acctId,
+      })
+    }
+
+    const updateFields: UpdateUserDto = {
+      stripeConnectAccountId: null,
+      payoutsEnabled: false,
+    }
+
+    await this.usersService.update(userId, updateFields)
+
+    return { disconnected: true }
   }
 }
