@@ -51,6 +51,10 @@ REFUNDED REFUNDED
     String website "❓"
     DateTime createdAt 
     DateTime updatedAt 
+    Int githubInstallationId "❓"
+    Int githubAccountId "❓"
+    String githubAccountLogin "❓"
+    String githubAccountType "❓"
     }
   
 

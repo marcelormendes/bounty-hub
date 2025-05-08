@@ -8,25 +8,26 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
 
   app.enableCors()
-  app.useGlobalPipes(new ValidationPipe({ transform: true }))
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }))
+  
   app.use(
-    '/payments/connect-account/webhook',
+    '/webhooks/github',
     express.raw({ type: 'application/json' }),
   )
 
   const config = new DocumentBuilder()
-    .setTitle('Bounty Hub API')
-    .setDescription('The Bounty Hub API documentation')
+    .setTitle('Bounty Hub GitHub App')
+    .setDescription('GitHub App for integrating with Bounty Hub')
     .setVersion('1.0')
     .addBearerAuth()
     .build()
 
   const document = SwaggerModule.createDocument(app, config)
-  SwaggerModule.setup('api/docs', app, document)
+  SwaggerModule.setup('docs', app, document)
 
-  const port = process.env.PORT || 3001
+  const port = process.env.PORT || 5000
   await app.listen(port)
-  console.log(`Application is running on: http://localhost:${port}`)
+  console.log(`GitHub App is running on: http://localhost:${port}`)
 }
 
 ;(async () => {

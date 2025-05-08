@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { BountiesService } from './bounties.service'
 import { CreateBountyDto } from './dto/create-bounty.dto'
 import { UpdateBountyDto } from './dto/update-bounty.dto'
+import { CreateGithubBountyDto } from './dto/create-github-bounty.dto'
 
 @ApiTags('bounties')
 @Controller('bounties')
@@ -28,6 +29,12 @@ export class BountiesController {
   @ApiOperation({ summary: 'Create a new bounty' })
   create(@Body() createBountyDto: CreateBountyDto, @Req() req) {
     return this.bountiesService.create(createBountyDto, req.user)
+  }
+
+  @Post('github')
+  @ApiOperation({ summary: 'Create a new bounty from GitHub issue' })
+  createFromGithub(@Body() createGithubBountyDto: CreateGithubBountyDto) {
+    return this.bountiesService.createFromGithub(createGithubBountyDto)
   }
 
   @Get()

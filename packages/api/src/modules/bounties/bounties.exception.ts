@@ -18,7 +18,10 @@ export const errorCodes: Record<string, string> = {
   BHB014: 'You cannot assign your own bounty to yourself',
   BHB015: 'Only in-progress bounties can be released',
   BHB016: 'You do not have permission to release this bounty',
-  BHB017: 'User with ID {id} not found',
+  BHB017: 'User with ID {id} does not have access to this client',
+  BHB018: 'Client with ID {id} not found',
+  BHB019: 'A bounty for this GitHub issue already exists: {id}',
+  BHB020: 'No users found for client {id}',
 }
 /**
  * Thrown when a landmarks operation fails.

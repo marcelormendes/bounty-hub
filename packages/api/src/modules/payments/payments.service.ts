@@ -147,7 +147,7 @@ export class PaymentsService {
     )
 
     if (event.type === 'account.updated') {
-      const acct = event.data.object as Stripe.Account
+      const acct = event.data.object
 
       await this.usersService.updateMany({
         where: { stripeConnectAccountId: acct.id },

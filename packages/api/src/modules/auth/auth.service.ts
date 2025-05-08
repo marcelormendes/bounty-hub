@@ -38,16 +38,4 @@ export class AuthService {
 
     return user
   }
-
-  // Generate application-specific JWT if needed, or rely on Supabase token
-  generateAppToken(user: User) {
-    // Use the imported User type
-    const payload = {
-      email: user.email, // Access should be safe now
-      sub: user.id, // Access should be safe now /* add other relevant claims */
-    }
-    return {
-      accessToken: this.jwtService.sign(payload),
-    }
-  }
 }

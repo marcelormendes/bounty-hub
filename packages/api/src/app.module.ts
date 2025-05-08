@@ -4,6 +4,7 @@ import { AuthModule } from './modules/auth/auth.module'
 import { UsersModule } from './modules/users/users.module'
 import { BountiesModule } from './modules/bounties/bounties.module'
 import { PaymentsModule } from './modules/payments/payments.module'
+import { GithubModule } from './modules/github/github.module'
 import { PrismaModule } from './common/prisma/prisma.module'
 
 @Module({
@@ -16,6 +17,7 @@ import { PrismaModule } from './common/prisma/prisma.module'
     UsersModule,
     BountiesModule,
     PaymentsModule,
+    GithubModule,
   ],
 })
 export class AppModule {}

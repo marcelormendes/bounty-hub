@@ -1,10 +1,11 @@
 import { Injectable, HttpStatus } from '@nestjs/common'
 import { Bounty, BountyStatus, User, UserRole } from '@prisma/client'
-import { PrismaService } from '@common/prisma/prisma.service'
+import { PrismaService } from '../../common/prisma/prisma.service'
 import { CreateBountyDto } from './dto/create-bounty.dto'
 import { UpdateBountyDto } from './dto/update-bounty.dto'
 import { BountiesException } from './bounties.exception'
-import { UsersService } from '@modules/users/users.service'
+import { UsersService } from '../users/users.service'
+import { CreateGithubBountyDto } from './dto/create-github-bounty.dto'
 
 @Injectable()
 export class BountiesService {
@@ -45,6 +46,63 @@ export class BountiesService {
         ...(deadline && { deadline }),
         status: BountyStatus.OPEN,
         githubIssueUrl,
+      },
+    })
+  }
+
+  async createFromGithub(
+    createGithubBountyDto: CreateGithubBountyDto,
+  ): Promise<Bounty> {
+    const {
+      clientId,
+      issueTitle,
+      issueBody,
+      issueUrl,
+      reward,
+      labels,
+      deadline,
+    } = createGithubBountyDto
+
+    // First, check if client exists
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId },
+    })
+
+    if (!client) {
+      throw new BountiesException('BHB018', HttpStatus.NOT_FOUND, clientId)
+    }
+
+    // Check if there's already a bounty for this GitHub issue
+    const existingBounty = await this.prisma.bounty.findFirst({
+      where: { githubIssueUrl: issueUrl },
+    })
+
+    if (existingBounty) {
+      throw new BountiesException('BHB019', HttpStatus.CONFLICT, issueUrl)
+    }
+
+    // Find a creator user associated with the client
+    const clientUser = await this.prisma.clientUser.findFirst({
+      where: { clientId },
+      include: { user: true },
+    })
+
+    if (!clientUser) {
+      throw new BountiesException('BHB020', HttpStatus.NOT_FOUND, clientId)
+    }
+
+    // Create the bounty
+    return this.prisma.bounty.create({
+      data: {
+        clientId,
+        creatorId: clientUser.userId,
+        title: issueTitle,
+        description: issueBody,
+        reward,
+        labels: labels || ['github-integration'],
+        ...(deadline && { deadline: new Date(deadline) }),
+        status: BountyStatus.OPEN,
+        githubIssueUrl: issueUrl,
       },
     })
   }

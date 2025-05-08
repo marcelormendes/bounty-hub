@@ -15,14 +15,20 @@ datasource db {
 }
 
 model Client {
-  id        String   @id @default(uuid())
-  email     String
-  name      String
-  website   String?
-  users     ClientUser[]
-  bounties  Bounty[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(uuid())
+  email             String
+  name              String
+  website           String?
+  users             ClientUser[]
+  bounties          Bounty[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // GitHub installation information
+  githubInstallationId Int?     @unique
+  githubAccountId      Int?
+  githubAccountLogin   String?
+  githubAccountType    String?  // 'Organization' or 'User'
 }
 
 model User {

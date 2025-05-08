@@ -15,7 +15,6 @@ import { PaymentsService } from './payments.service'
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto'
 import { Request } from 'express'
 import { PaymentsException } from './payments.exception'
-import stripe, { Stripe } from 'stripe'
 interface AuthUser extends Request {
   user: { id: string }
 }

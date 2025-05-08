@@ -38,6 +38,19 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# IDE
 .cursorrules
-
 .vscode
+.idea
+.cursor/
+
+# Claude
+CLAUDE.md
+
+# Logs
+logs
+*.log
+
+# Temporary files
+.tmp
+tmp/
